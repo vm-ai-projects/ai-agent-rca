@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Incident RCA Agent — Vivek Mishra</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .header { margin-bottom: 2rem; }
+    .header h1 { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+    .header p { font-size: 14px; color: #666; margin-top: 6px; }
+    .header .badge {
+      font-size: 11px; padding: 3px 8px; border-radius: 4px;
+      background: #e8f5e9; color: #2e7d32; font-weight: 500; margin-left: 4px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .label {
+      font-size: 11px; font-weight: 600; color: #888;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+    }
+
+    input[type="password"] {
+      width: 100%; font-family: monospace; font-size: 13px;
+      background: #f9f9f9; border: 1px solid #e0e0e0;
+      border-radius: 8px; padding: 9px 12px; color: #1a1a1a;
+      outline: none; transition: border-color 0.15s;
+    }
+    input[type="password"]:focus { border-color: #999; }
+
+    .note { font-size: 11px; color: #bbb; margin-top: 6px; }
+
+    .tabs {
+      display: flex; border: 1px solid #e5e5e5;
+      border-radius: 8px; overflow: hidden; margin-bottom: 12px;
+    }
+    .tab {
+      flex: 1; padding: 8px; font-size: 13px; text-align: center;
+      cursor: pointer; background: #f5f5f5; color: #888;
+      border: none; transition: all 0.15s;
+    }
+    .tab.active { background: #fff; color: #1a1a1a; font-weight: 500; }
+    .tab:first-child { border-right: 1px solid #e5e5e5; }
+
+    textarea {
+      width: 100%; min-height: 150px; resize: vertical;
+      font-family: monospace; font-size: 12px; background: #f9f9f9;
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 10px 12px; color: #1a1a1a; line-height: 1.6;
+      outline: none; transition: border-color 0.15s;
+    }
+    textarea:focus { border-color: #999; }
+
+    .upload-zone {
+      border: 2px dashed #d0d0d0; border-radius: 8px;
+      padding: 2.5rem; text-align: center; cursor: pointer;
+      background: #fafafa; transition: all 0.15s;
+    }
+    .upload-zone:hover { border-color: #aaa; background: #f5f5f5; }
+    .upload-zone.has-file { border-color: #4caf50; background: #f0faf0; }
+    .upload-zone p { font-size: 13px; color: #888; margin-top: 8px; }
+
+    .run-btn {
+      width: 100%; padding: 11px; border-radius: 8px;
+      border: 1px solid #d0d0d0; background: #1a1a1a; color: #fff;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; margin-top: 14px; transition: all 0.15s;
+    }
+    .run-btn:hover:not(:disabled) { background: #333; }
+    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .output { display: none; }
+
+    .incident-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+
+    .sev-badge {
+      display: inline-block; font-size: 11px; padding: 3px 10px;
+      border-radius: 6px; font-weight: 600; margin-left: 8px; vertical-align: middle;
+    }
+    .sev-Critical { background: #fdecea; color: #b71c1c; }
+    .sev-High     { background: #fff3e0; color: #e65100; }
+    .sev-Medium   { background: #e3f2fd; color: #0d47a1; }
+    .sev-Low      { background: #e8f5e9; color: #1b5e20; }
+
+    .rca-section { margin-bottom: 1.25rem; }
+    .rca-section h4 {
+      font-size: 12px; font-weight: 600; color: #999;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+    }
+    .rca-section p, .rca-section li { font-size: 13px; color: #444; line-height: 1.7; }
+    .rca-section ul { padding-left: 1.2rem; }
+    .rca-section li { margin-bottom: 4px; }
+
+    .timeline-item { display: flex; gap: 12px; margin-bottom: 6px; align-items: flex-start; }
+    .timeline-time {
+      font-family: monospace; font-size: 11px; color: #bbb;
+      min-width: 52px; padding-top: 2px; flex-shrink: 0;
+    }
+    .timeline-event { font-size: 13px; color: #444; line-height: 1.5; }
+
+    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 1rem 0; }
+
+    .dl-btn {
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px solid #e0e0e0; background: #f9f9f9; color: #333;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; transition: all 0.15s;
+    }
+    .dl-btn:hover { background: #f0f0f0; }
+
+    .token-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .token-metric { background: #f9f9f9; border-radius: 8px; padding: 12px 14px; }
+    .tm-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+    .tm-value { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+    .tm-sub   { font-size: 11px; color: #bbb; margin-top: 3px; }
+
+    .progress-wrap { margin-bottom: 10px; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #888; margin-bottom: 5px;
+    }
+    .progress-bar { height: 5px; background: #eee; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    .progress-fill.input-fill  { background: #2196f3; }
+    .progress-fill.output-fill { background: #4caf50; }
+
+    .cost-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13px; padding-top: 12px; border-top: 1px solid #f0f0f0;
+    }
+
+    .error-box {
+      background: #fdecea; border: 1px solid #ef9a9a; border-radius: 8px;
+      padding: 10px 14px; font-size: 13px; color: #c62828;
+      margin-top: 10px; display: none;
+    }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center; font-size: 12px; color: #bbb;
+      margin-top: 2rem; padding-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>
+      <i class="ti ti-robot" style="font-size:24px;"></i>
+      Incident RCA Agent
+      <span class="badge">Claude Sonnet 4.6</span>
+    </h1>
+    <p>Upload a stack trace or paste logs — get an AI-powered root cause analysis in seconds.</p>
+  </div>
+
+  <!-- API Key -->
+  <div class="card">
+    <div class="label">Anthropic API key</div>
+    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off"/>
+    <p class="note"><i class="ti ti-lock" style="font-size:12px;"></i> Used only in your browser — never stored or sent anywhere except Anthropic's API</p>
+  </div>
+
+  <!-- Input -->
+  <div class="card">
+    <div class="label">Incident input</div>
+    <div class="tabs">
+      <button class="tab active" id="tab-paste" onclick="switchTab('paste')">
+        <i class="ti ti-clipboard"></i> Paste logs
+      </button>
+      <button class="tab" id="tab-upload" onclick="switchTab('upload')">
+        <i class="ti ti-upload"></i> Upload file
+      </button>
+    </div>
+
+    <div id="pane-paste">
+      <textarea id="log-input" placeholder="Paste your stack trace, error logs, or incident description here..."></textarea>
+    </div>
+
+    <div id="pane-upload" style="display:none;">
+      <div class="upload-zone" id="upload-zone"
+           onclick="document.getElementById('file-input').click()"
+           ondragover="handleDragOver(event)"
+           ondrop="handleDrop(event)">
+        <i class="ti ti-file-upload" style="font-size:28px;color:#ccc;"></i>
+        <p id="upload-label">Click to upload or drag & drop a .txt / .log file</p>
+      </div>
+      <input type="file" id="file-input" accept=".txt,.log,.out,.stacktrace" style="display:none;" onchange="handleFileSelect(event)"/>
+    </div>
+
+    <button class="run-btn" id="run-btn" onclick="runAgent()">
+      <i class="ti ti-player-play"></i> Analyze with RCA Agent
+    </button>
+    <div class="error-box" id="error-box"></div>
+  </div>
+
+  <!-- Output -->
+  <div class="output" id="output">
+
+    <div class="card">
+      <div id="rca-content"></div>
+      <hr class="divider"/>
+      <button class="dl-btn" onclick="downloadReport()">
+        <i class="ti ti-download"></i> Download RCA report as text file
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="label">Token usage</div>
+      <div class="token-grid" id="token-grid"></div>
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span><i class="ti ti-arrow-down" style="font-size:12px;color:#2196f3;"></i> Input window</span>
+          <span id="input-pct-label">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill input-fill" id="input-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span><i class="ti ti-arrow-up" style="font-size:12px;color:#4caf50;"></i> Output window</span>
+          <span id="output-pct-label">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill output-fill" id="output-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="cost-row">
+        <span style="color:#888;">Estimated cost this call</span>
+        <span style="font-weight:600;" id="cost-val">—</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Built by Vivek Mishra · Powered by Claude Sonnet 4.6 · <a href="https://github.com/vivekmishra33/ai-agent-rca" style="color:#bbb;">GitHub</a></footer>
+
+</div>
+
+<script>
+  const MAX_INPUT  = 200000;
+  const MAX_OUTPUT = 8192;
+  let currentReport   = null;
+  let activeTab       = 'paste';
+  let uploadedContent = '';
+
+  const SYSTEM_PROMPT = `You are an expert Site Reliability Engineer and incident analyst.
+Analyze the provided logs or incident description and produce a structured Root Cause Analysis (RCA) report.
+Respond ONLY with a valid JSON object (no markdown, no backticks) with this exact structure:
+{
+  "title": "short incident title",
+  "severity": "Critical | High | Medium | Low",
+  "summary": "2-3 sentence plain-English summary of what happened",
+  "root_causes": ["root cause 1", "root cause 2"],
+  "affected_components": ["component 1", "component 2"],
+  "timeline": [{"time": "HH:MM", "event": "what happened"}],
+  "immediate_actions": ["action 1", "action 2"],
+  "long_term_fixes": ["fix 1", "fix 2"]
+}`;
+
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-paste').className  = 'tab' + (tab === 'paste'  ? ' active' : '');
+    document.getElementById('tab-upload').className = 'tab' + (tab === 'upload' ? ' active' : '');
+    document.getElementById('pane-paste').style.display  = tab === 'paste'  ? 'block' : 'none';
+    document.getElementById('pane-upload').style.display = tab === 'upload' ? 'block' : 'none';
+  }
+
+  function handleDragOver(e) { e.preventDefault(); }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) readFile(file);
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) readFile(file);
+  }
+
+  function readFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      uploadedContent = e.target.result;
+      document.getElementById('upload-zone').className = 'upload-zone has-file';
+      document.getElementById('upload-label').textContent = file.name + ' — ready to analyze';
+    };
+    reader.readAsText(file);
+  }
+
+  async function runAgent() {
+    const apiKey = document.getElementById('api-key').value.trim();
+    if (!apiKey) { showError('Please enter your Anthropic API key.'); return; }
+
+    const logs = activeTab === 'paste'
+      ? document.getElementById('log-input').value.trim()
+      : uploadedContent;
+
+    if (!logs) { showError('Please paste logs or upload a file first.'); return; }
+
+    const btn = document.getElementById('run-btn');
+    document.getElementById('error-box').style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Analyzing...';
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 2000,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: `Analyze this incident:\n\n${logs}` }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message);
+
+      const text  = data.content.map(i => i.text || '').join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      currentReport = JSON.parse(clean);
+
+      renderReport(currentReport);
+      renderTokens(data.usage);
+      document.getElementById('output').style.display = 'block';
+      document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      showError('Error: ' + (err.message || 'Something went wrong. Check your API key and try again.'));
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-player-play"></i> Analyze with RCA Agent';
+  }
+
+  function renderReport(r) {
+    let html = `
+      <div class="rca-section">
+        <div class="incident-title">
+          <i class="ti ti-alert-triangle" style="color:#e65100;"></i>
+          ${r.title}
+          <span class="sev-badge sev-${r.severity}">${r.severity}</span>
+        </div>
+        <p style="margin-top:8px;font-size:13px;color:#555;">${r.summary}</p>
+      </div>
+      <div class="rca-section">
+        <h4><i class="ti ti-bulb"></i> Root causes</h4>
+        <ul>${r.root_causes.map(c => `<li>${c}</li>`).join('')}</ul>
+      </div>
+      <div class="rca-section">
+        <h4><i class="ti ti-components"></i> Affected components</h4>
+        <ul>${r.affected_components.map(c => `<li>${c}</li>`).join('')}</ul>
+      </div>`;
+
+    if (r.timeline && r.timeline.length) {
+      html += `<div class="rca-section"><h4><i class="ti ti-timeline"></i> Timeline</h4>`;
+      r.timeline.forEach(t => {
+        html += `<div class="timeline-item">
+          <span class="timeline-time">${t.time}</span>
+          <span class="timeline-event">${t.event}</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += `
+      <div class="rca-section">
+        <h4><i class="ti ti-urgent"></i> Immediate actions</h4>
+        <ul>${r.immediate_actions.map(a => `<li>${a}</li>`).join('')}</ul>
+      </div>
+      <div class="rca-section">
+        <h4><i class="ti ti-tools"></i> Long-term fixes</h4>
+        <ul>${r.long_term_fixes.map(f => `<li>${f}</li>`).join('')}</ul>
+      </div>`;
+
+    document.getElementById('rca-content').innerHTML = html;
+  }
+
+  function renderTokens(usage) {
+    const inp    = usage.input_tokens;
+    const out    = usage.output_tokens;
+    const inPct  = ((inp / MAX_INPUT)  * 100).toFixed(2);
+    const outPct = ((out / MAX_OUTPUT) * 100).toFixed(2);
+    const cost   = ((inp * 0.000003) + (out * 0.000015)).toFixed(6);
+
+    document.getElementById('token-grid').innerHTML = `
+      <div class="token-metric">
+        <div class="tm-label"><i class="ti ti-arrow-down" style="font-size:12px;color:#2196f3;"></i> Input tokens</div>
+        <div class="tm-value">${inp.toLocaleString()}</div>
+        <div class="tm-sub">${(MAX_INPUT - inp).toLocaleString()} remaining of 200k max</div>
+      </div>
+      <div class="token-metric">
+        <div class="tm-label"><i class="ti ti-arrow-up" style="font-size:12px;color:#4caf50;"></i> Output tokens</div>
+        <div class="tm-value">${out.toLocaleString()}</div>
+        <div class="tm-sub">${(MAX_OUTPUT - out).toLocaleString()} remaining of 8,192 max</div>
+      </div>`;
+
+    document.getElementById('input-pct-label').textContent  = inPct + '%';
+    document.getElementById('output-pct-label').textContent = outPct + '%';
+    document.getElementById('input-bar').style.width  = Math.min(parseFloat(inPct),  100) + '%';
+    document.getElementById('output-bar').style.width = Math.min(parseFloat(outPct), 100) + '%';
+    document.getElementById('cost-val').textContent   = '$' + cost + ' USD';
+  }
+
+  function downloadReport() {
+    if (!currentReport) return;
+    const r = currentReport;
+    let text = `INCIDENT RCA REPORT\n${'='.repeat(60)}\n\n`;
+    text += `INCIDENT : ${r.title}\n`;
+    text += `SEVERITY : ${r.severity}\n`;
+    text += `${'='.repeat(60)}\n\n`;
+    text += `SUMMARY\n${r.summary}\n\n`;
+    text += `ROOT CAUSES\n${r.root_causes.map((c, i) => `  ${i+1}. ${c}`).join('\n')}\n\n`;
+    text += `AFFECTED COMPONENTS\n${r.affected_components.map(c => `  - ${c}`).join('\n')}\n\n`;
+    if (r.timeline && r.timeline.length) {
+      text += `TIMELINE\n${r.timeline.map(t => `  ${t.time} — ${t.event}`).join('\n')}\n\n`;
+    }
+    text += `IMMEDIATE ACTIONS\n${r.immediate_actions.map((a, i) => `  ${i+1}. ${a}`).join('\n')}\n\n`;
+    text += `LONG-TERM FIXES\n${r.long_term_fixes.map((f, i) => `  ${i+1}. ${f}`).join('\n')}\n`;
+
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'rca-report.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function showError(msg) {
+    const e = document.getElementById('error-box');
+    e.textContent  = msg;
+    e.style.display = 'block';
+  }
+</script>
+</body>
+</html>
