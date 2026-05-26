@@ -209,7 +209,7 @@ LONG-TERM FIXES
 ## Author
 
 **Vivek Mishra** — Senior Technical Architect  
-[GitHub](https://github.com/vm-ai-projects) · [LinkedIn](https://linkedin.com/in/vivek-mishra)
+[GitHub](https://github.com/vm-ai-projects) · [LinkedIn](https://linkedin.com/in/vivekmishra33)
 
 ---
 
